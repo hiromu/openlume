@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>openLUME</title>
+		<link rel="stylesheet" type="text/css" href="{{ static_url('color.css') }}" />
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+		<script type="text/javascript" src="{{ static_url ('color.js') }}"></script>
+	</head>
+	<body>
+		<div id="main"></div>
+		<script>
+			var color = ["{% raw '", "'.join(map(escape, color)) %}"];
+		</script>
+	</body>
+</html>

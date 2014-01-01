@@ -1,0 +1,38 @@
+#main {
+	width: 400px;
+}
+#swatch {
+	height: 300px;
+	margin-left: 400px;
+	width: 300px;
+}
+
+div.color {
+	float: left;
+	margin: 20px;
+	width: 300px;
+}
+div.slider {
+	margin: 5px;
+}
+
+.color p {
+	margin: 0;
+}
+.color input {
+	margin: 5px;
+	width: 285px;
+}
+
+.red div.ui-slider-range {
+	background: #ef2929;
+}
+.green div.ui-slider-range {
+	background: #8ae234;
+}
+.blue div.ui-slider-range {
+	background: #729fcf;
+}
+.bpm div.ui-slider-range {
+	background: #e9e9e9;
+}
