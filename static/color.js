@@ -20,7 +20,10 @@ function setFlash(bpm, pattern) {
 				count %= pattern.length;
 		}, 60000 / bpm);
 	} else {
-		$('#main').css('visibility', 'visible');
+		if(pattern.length && pattern[0] == '1')
+			$('#main').css('visibility', 'visible');
+		else
+			$('#main').css('visibility', 'hidden');
 	}
 }
 

@@ -16,8 +16,9 @@ function updateColor(event, ui) {
 	$('#swatch').css('background-color', 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')');
 
 	clearInterval(flash);
+
+	var pattern = $('#pattern').attr('value');
 	if(color[3]) {
-		var pattern = $('#pattern').attr('value');
 		var count = 0;
 
 		if(pattern.length == 0)
@@ -34,7 +35,10 @@ function updateColor(event, ui) {
 				count %= pattern.length;
 		}, 60000 / color[3]);
 	} else {
-		$('#swatch').css('visibility', 'visible');
+		if(pattern.length && pattern[0] == '1')
+			$('#swatch').css('visibility', 'visible');
+		else
+			$('#swatch').css('visibility', 'hidden');
 	}
 }
 
@@ -75,7 +79,7 @@ $(function() {
 		});
 	}
 
-	$('.bpm .slider').slider('option', 'max', 300);
+	$('.bpm .slider').slider('option', 'max', 400);
 
 	$('#pattern').attr('value', color[4]);
 	$('#pattern').keyup(function() {
