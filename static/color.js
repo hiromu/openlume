@@ -1,26 +1,26 @@
 var flash = null;
 var retry = null;
 
-function setFlash(bpm, pattern) {
+function setFlash(bpm, rhythm) {
 	clearInterval(flash);
 
-	if(pattern.length == 0)
-		pattern = '1';
+	if(rhythm.length == 0)
+		rhythm = '1';
 
 	if(bpm) {
 		var count = 0;
 		flash = setInterval(function() {
-			if(pattern[count] == '1')
+			if(rhythm[count] == '1')
 				$('#main').css('visibility', 'visible');
 			else
 				$('#main').css('visibility', 'hidden');
 
 			count++;
-			if(count >= pattern.length)
-				count %= pattern.length;
+			if(count >= rhythm.length)
+				count %= rhythm.length;
 		}, 60000 / bpm);
 	} else {
-		if(pattern.length && pattern[0] == '1')
+		if(rhythm.length && rhythm[0] == '1')
 			$('#main').css('visibility', 'visible');
 		else
 			$('#main').css('visibility', 'hidden');
@@ -36,9 +36,9 @@ function openSocket(host) {
 	}
 
 	socket.onmessage = function(event) {
-		var json = JSON.parse(event.data)
+		var json = JSON.parse(event.data);
 		$('#main').css('background-color', json['color']);
-		setFlash(json['bpm'], json['pattern']);
+		setFlash(json['bpm'], json['rhythm']);
 	}
 
 	socket.onclose = function(event) {

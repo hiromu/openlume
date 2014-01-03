@@ -10,30 +10,35 @@
 	</head>
 	<body>
 		<div id="main">
-			<div class="color red">
-				<p>Red: <label></label></p>
-				<div class="slider"></div>
+			<div id="palette">
+				<div class="color">
+					<button class="add">+</button>
+				</div>
 			</div>
-			<div class="color green">
-				<p>Green: <label></label></p>
-				<div class="slider"></div>
-			</div>
-			<div class="color blue">
-				<p>Blue: <label></label></p>
-				<div class="slider"></div>
-			</div>
-			<div class="color bpm">
-				<p>BPM: <label></label></p>
-				<div class="slider"></div>
-			</div>
-			<div class="color">
-				<p>Pattern:</p>
-				<input id="pattern" type="text"></input>
+			<div id="options">
+				<div class="colors">
+					<div class="red">
+						<p>Red: <label></label></p>
+						<div class="slider"></div>
+					</div>
+					<div class="green">
+						<p>Green: <label></label></p>
+						<div class="slider"></div>
+					</div>
+					<div class="blue">
+						<p>Blue: <label></label></p>
+						<div class="slider"></div>
+					</div>
+				</div>
+				<div class="bpm">
+					<p>BPM: <label></label></p>
+					<div class="slider"></div>
+				</div>
+				<div class="rhythm">
+					<p>Rhythm: </p>
+					<input id="rhythm" type="text"></input>
+				</div>
 			</div>
 		</div>
-		<div id="swatch"></div>
-		<script>
-			var color = ["{% raw '", "'.join(map(escape, color)) %}"];
-		</script>
 	</body>
 </html>

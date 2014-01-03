@@ -2,6 +2,7 @@
 
 import os
 import json
+import random
 import logging
 
 import cyclone.web
@@ -11,48 +12,101 @@ import twisted.internet.reactor
 import txosc.async
 import txosc.dispatch
 
-callback = set()
-color = [255, 255, 255, 120, '10']
-switch = True
+class Environment:
+	def __init__(self):
+		self.admin = set()
+		self.callback = set()
+		self.vote = None
 
-def getMessage():
-	if switch:
-		return json.dumps({'color': 'rgb(%d, %d, %d)' % tuple(color[:3]), 'bpm': color[3], 'pattern': color[4]})
-	else:
-		return json.dumps({'color': 'rgb(%d, %d, %d)' % tuple(color[:3]), 'bpm': 0, 'pattern': '0'})
+		self.switch = True
+		self.color = [[255, 255, 255]]
+		self.bpm = 120
+		self.rhythm = '10'
+
+	def getEnv(self):
+		return map(str, random.choice(self.color) + [self.bpm, self.rhythm])
+
+	def getMessage(self):
+		color = random.choice(self.color)
+		params = {'color': 'rgb(%d, %d, %d)' % tuple(color), 'bpm': self.bpm, 'rhythm': self.rhythm}
+
+		if not self.switch:
+			params['bpm'] = 0
+			params['rhythm'] = '0'
+
+		return json.dumps(params)
+
+	def getAdminMessage(self):
+		params = {'color': self.color, 'bpm': self.bpm, 'rhythm': self.rhythm}
+		return json.dumps(params)
+
+	def update(self):
+		for c in self.callback:
+			c.sendMessage(self.getMessage())
+
+	def updateAdmin(self, exclude = None):
+		for c in self.admin:
+			if c != exclude:
+				c.sendMessage(self.getAdminMessage())
+
+env = Environment()
+
 
 class MainHandler(cyclone.web.RequestHandler):
 	def get(self):
-		self.render('index.html', color = map(str, color))
-
+		self.render('index.html', color = env.getEnv())
 
 class MainColorHandler(cyclone.websocket.WebSocketHandler):
 	def connectionMade(self):
-		callback.add(self)
-		self.sendMessage(getMessage())
+		env.callback.add(self)
+		self.sendMessage(env.getMessage())
 
 	def connectionLost(self, reason):
-		if self in callback:
-			callback.remove(self)
+		if self in env.callback:
+			env.callback.remove(self)
 
 
 class AdminHandler(cyclone.web.RequestHandler):
 	def get(self):
-		self.render('admin.html', color = map(str, color))
+		self.render('admin.html', color = env.getEnv())
 
 class AdminColorHandler(cyclone.websocket.WebSocketHandler):
-	def messageReceived(self, message):
-		global color
+	def connectionMade(self):
+		env.admin.add(self)
+		self.sendMessage(env.getAdminMessage())
 
+	def connectionLost(self, reason):
+		if self in env.admin:
+			env.admin.remove(self)
+
+	def messageReceived(self, message):
 		data = json.loads(message)
-		color = [data['red'], data['green'], data['blue'], data['bpm'], data['pattern']]
-		for c in callback:
-			c.sendMessage(getMessage())
+
+		if 'color' in data:
+			env.color = []
+			for color in data['color']:
+				if len(color) != 3:
+					continue
+				for i in range(3):
+					if type(color[i]) != int:
+						color[i] = 0
+					else:
+						color[i] = max(0, min(255, color[i]))
+				env.color.append(color)
+		if 'bpm' in data and type(data['bpm']) == int:
+			env.bpm = data['bpm']
+		if 'rhythm' in data and type(data['rhythm']) == unicode:
+			env.rhythm = str(data['rhythm'])
+
+		env.update()
+		env.updateAdmin(self)
+
 
 class OSCHandler(object):
 	def __init__(self, port):
 		routes = [
-			('/cyluim/*', self.cyluim_handler)
+			('/cyluim/*', self.cyluim_handler),
+			('/vote/*', self.vote_handler)
 		]
 
 		self.receiver = txosc.dispatch.Receiver()
@@ -63,30 +117,47 @@ class OSCHandler(object):
 		twisted.internet.reactor.listenUDP(port, txosc.async.DatagramServerProtocol(self.receiver))
 
 	def cyluim_handler(self, message, address):
-		global color, switch
-
 		function = message.address.split('/')[2]
 		value = message.getValues()
 
-		print function, value
 		if function == 'switch' and len(value) == 1:
 			if value[0] == 0:
-				switch = False
+				env.switch = False
 			elif value[0] == 1:
-				switch = True
-		if function == 'color' and len(value) == 3:
-			for i in range(3):
-				if type(value[i]) == int and 0 <= value[i] <= 255:
-					color[i] = value[i]
+				env.switch = True
+
+		elif function == 'color' and len(value) % 3 == 0:
+			env.color = []
+			for i in range(0, len(value), 3):
+				color = [0, 0, 0]
+				for j in range(3):
+					if type(value[i + j]) == int:
+						color[j] = max(0, min(255, value[i + j]))
+				env.color.append(color)
+
 		elif function == 'bpm' and len(value) == 1:
 			if type(value[0]) == int:
-				color[3] = value[0]
+				env.bpm = value[0]
+
 		elif function == 'rhythm' and len(value) == 1:
 			if type(value[0]) == str:
-				color[4] = value[0]
+				env.rhythm = value[0]
 
-		for c in callback:
-			c.sendMessage(getMessage())
+		env.update()
+		env.updateAdmin()
+
+	def vote_handler(self, message, address):
+		function = message.address.split('/')[2]
+		value = message.getValues()
+
+		if function == 'start' and len(value) != 0:
+			pass
+		elif function == 'get':
+			pass
+		elif function == 'end':
+			pass
+
+		print message, address
 
 	def fallback(self, message, address):
 		print message, address
