@@ -34,7 +34,7 @@ function openSocket(host) {
 			return;
 		retry = setInterval(function() {
 			openSocket(host);
-		}, 1000);
+		}, 2000);
 	};
 	socket.onerror = socket.onclose;
 }
