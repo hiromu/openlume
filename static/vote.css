@@ -1,0 +1,32 @@
+div#vote {
+	width: 900px;
+}
+
+div.choice {
+	border: solid 3px #aaa;
+	border-radius: 5px;
+	box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.2);
+	float: left;
+	height: 250px;
+	margin: 15px;
+	width: 250px;
+}
+
+div.choice:hover {
+	box-shadow: 6px 6px 6px rgba(0, 0, 0, 0.2);
+}
+
+div.choice>p {
+	font-size: 30px;
+	position: relative;
+	text-align: center;
+	top: 50%;
+}
+
+div.choice>p.label {
+	margin-top: -1.4em;
+}
+
+div.choice>p.count {
+	margin-top: 0.2em;
+}

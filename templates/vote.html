@@ -2,15 +2,13 @@
 <html>
 	<head>
 		<title>openLUME</title>
-		<link rel="stylesheet" type="text/css" href="{{ static_url('color.css') }}" />
+		<link rel="stylesheet" type="text/css" href="{{ static_url('vote.css') }}" />
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-		<script type="text/javascript" src="{{ static_url ('color.js') }}"></script>
+		<script type="text/javascript" src="{{ static_url ('vote.js') }}"></script>
 	</head>
 	<body>
-		<div id="main"></div>
 		<div id="vote"></div>
 		<script>
-			var color = {% raw color %};
 			var vote = {% raw vote %};
 		</script>
 	</body>

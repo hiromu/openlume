@@ -16,7 +16,7 @@ class Environment:
 	def __init__(self):
 		self.admin = set()
 		self.callback = set()
-		self.vote = None
+		self.vote = {}
 
 		self.switch = True
 		self.color = [[255, 255, 255]]
@@ -24,7 +24,7 @@ class Environment:
 		self.rhythm = '10'
 
 	def getEnv(self):
-		return map(str, random.choice(self.color) + [self.bpm, self.rhythm])
+		return json.dumps(map(str, random.choice(self.color) + [self.bpm, self.rhythm]))
 
 	def getMessage(self):
 		color = random.choice(self.color)
@@ -49,14 +49,20 @@ class Environment:
 			if c != exclude:
 				c.sendMessage(self.getAdminMessage())
 
+	def sendVote(self):
+		message = json.dumps({'vote': self.vote.keys()})
+		for c in self.callback:
+			c.sendMessage(message)
+
+
 env = Environment()
 
 
 class MainHandler(cyclone.web.RequestHandler):
 	def get(self):
-		self.render('index.html', color = env.getEnv())
+		self.render('index.html', color = env.getEnv(), vote = json.dumps(env.vote.keys()))
 
-class MainColorHandler(cyclone.websocket.WebSocketHandler):
+class MainSocketHandler(cyclone.websocket.WebSocketHandler):
 	def connectionMade(self):
 		env.callback.add(self)
 		self.sendMessage(env.getMessage())
@@ -65,12 +71,17 @@ class MainColorHandler(cyclone.websocket.WebSocketHandler):
 		if self in env.callback:
 			env.callback.remove(self)
 
+	def messageReceived(self, message):
+		data = json.loads(message)
+		if 'vote' in data and data['vote'] in env.vote:
+			env.vote[data['vote']] += 1
+
 
 class AdminHandler(cyclone.web.RequestHandler):
 	def get(self):
 		self.render('admin.html', color = env.getEnv())
 
-class AdminColorHandler(cyclone.websocket.WebSocketHandler):
+class AdminSocketHandler(cyclone.websocket.WebSocketHandler):
 	def connectionMade(self):
 		env.admin.add(self)
 		self.sendMessage(env.getAdminMessage())
@@ -96,16 +107,25 @@ class AdminColorHandler(cyclone.websocket.WebSocketHandler):
 		if 'bpm' in data and type(data['bpm']) == int:
 			env.bpm = data['bpm']
 		if 'rhythm' in data and type(data['rhythm']) == unicode:
-			env.rhythm = str(data['rhythm'])
+			env.rhythm = data['rhythm']
 
 		env.update()
 		env.updateAdmin(self)
 
 
+class VoteHandler(cyclone.web.RequestHandler):
+	def get(self):
+		self.render('vote.html', vote = json.dumps(env.vote))
+
+class VoteSocketHandler(cyclone.websocket.WebSocketHandler):
+	def messageReceived(self, message):
+		self.sendMessage(json.dumps(env.vote))
+
+
 class OSCHandler(object):
 	def __init__(self, port):
 		routes = [
-			('/cyluim/*', self.cyluim_handler),
+			('/cylume/*', self.cylume_handler),
 			('/vote/*', self.vote_handler)
 		]
 
@@ -116,7 +136,7 @@ class OSCHandler(object):
 
 		twisted.internet.reactor.listenUDP(port, txosc.async.DatagramServerProtocol(self.receiver))
 
-	def cyluim_handler(self, message, address):
+	def cylume_handler(self, message, address):
 		function = message.address.split('/')[2]
 		value = message.getValues()
 
@@ -151,13 +171,16 @@ class OSCHandler(object):
 		value = message.getValues()
 
 		if function == 'start' and len(value) != 0:
-			pass
+			env.vote = {}
+			for i in value:
+				if type(i) == str:
+					env.vote[i.decode('UTF-8')] = 0
+			env.sendVote()
 		elif function == 'get':
-			pass
+			print env.vote
 		elif function == 'end':
-			pass
-
-		print message, address
+			env.vote = {}
+			env.sendVote()
 
 	def fallback(self, message, address):
 		print message, address
@@ -166,8 +189,10 @@ def main():
 	routes = [
 		(r'/', MainHandler),
 		(r'/admin', AdminHandler),
-		(r'/socket', MainColorHandler),
-		(r'/socket/admin', AdminColorHandler)
+		(r'/vote', VoteHandler),
+		(r'/socket', MainSocketHandler),
+		(r'/socket/admin', AdminSocketHandler),
+		(r'/socket/vote', VoteSocketHandler)
 	]
 
 	app = cyclone.web.Application(routes,

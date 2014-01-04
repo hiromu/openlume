@@ -1,13 +1,38 @@
-* {
+html, body, #main, #vote {
+	height: 100%;
 	margin: 0;
 	padding: 0;
-}
-
-html, body, #main {
-	height: 100%;
 	width: 100%;
 }
 
 body {
 	background-color: #000000;
+}
+
+#vote {
+	position: absolute;
+	top: 0;
+}
+
+div.choice {
+	height: 25%;
+}
+
+div.choice>button {
+	border: 5px solid #eee;
+	border-radius: 10px;
+	display: table;
+	height: 70%;
+	left: 15%;
+	position: relative;
+	top: 15%;
+	width: 70%;
+}
+
+div.choice>button:hover {
+	border-color: #66f;
+}
+
+div.choice>button:active {
+	background-color: #bbb;
 }
