@@ -200,7 +200,7 @@ def main():
 		static_path = os.path.join(os.path.dirname(__file__), 'static'))
 	twisted.internet.reactor.listenTCP(8888, app)
 
-	OSCHandler(31337)
+	OSCHandler(51227)
 	twisted.internet.reactor.run()
 
 if __name__ == '__main__':
