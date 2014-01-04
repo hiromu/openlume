@@ -49,10 +49,12 @@ class Environment:
 			if c != exclude:
 				c.sendMessage(self.getAdminMessage())
 
+	def getVote(self):
+		return json.dumps({'vote': self.vote.keys()})
+
 	def sendVote(self):
-		message = json.dumps({'vote': self.vote.keys()})
 		for c in self.callback:
-			c.sendMessage(message)
+			c.sendMessage(self.getVote())
 
 
 env = Environment()
@@ -60,12 +62,13 @@ env = Environment()
 
 class MainHandler(cyclone.web.RequestHandler):
 	def get(self):
-		self.render('index.html', color = env.getEnv(), vote = json.dumps(env.vote.keys()))
+		self.render('index.html', color = env.getEnv())
 
 class MainSocketHandler(cyclone.websocket.WebSocketHandler):
 	def connectionMade(self):
 		env.callback.add(self)
 		self.sendMessage(env.getMessage())
+		self.sendMessage(env.getVote())
 
 	def connectionLost(self, reason):
 		if self in env.callback:

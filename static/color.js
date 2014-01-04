@@ -60,9 +60,9 @@ function openSocket(host) {
 	};
 
 	socket.onclose = function(event) {
+		$('div.choice').remove();
 		if(retry)
 			return;
-
 		retry = setInterval(function() {
 			openSocket(host);
 		}, 1000);
@@ -78,5 +78,4 @@ $(function() {
 
 	$('#main').css('background-color', 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')');
 	setFlash(color[3], color[4]);
-	setVote(socket, vote);
 });
