@@ -36,7 +36,9 @@ function removeChoice() {
 }
 
 function setVote(socket, choice) {
+	var size = Infinity;
 	var vote = document.getElementById('vote');
+
 	for(var i = 0; i < choice.length; i++) {
 		var button = document.createElement('button');
 		button.innerText = choice[i];
@@ -53,7 +55,13 @@ function setVote(socket, choice) {
 		div.style.height = 100 / choice.length + '%';
 		div.appendChild(button);
 		vote.appendChild(div);
+
+		size = Math.min(size, Math.min(button.offsetHeight * 0.6, button.offsetWidth * 0.8 / choice[i].length));
 	}
+
+	var button = document.getElementById('vote').getElementsByTagName('button');
+	for(var i = 0; i < button.length; i++)
+		button[i].style.fontSize = size + 'px';
 }
 
 function openSocket(host) {
