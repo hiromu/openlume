@@ -10,35 +10,50 @@ function setFlash(bpm, rhythm) {
 	if(bpm) {
 		var count = 0;
 		flash = setInterval(function() {
+			var main = document.getElementById('main');
 			if(rhythm[count] == '1')
-				$('#main').css('visibility', 'visible');
+				main.style.visibility = 'visible';
 			else
-				$('#main').css('visibility', 'hidden');
+				main.style.visibility = 'hidden';
 
 			count++;
 			if(count >= rhythm.length)
 				count %= rhythm.length;
 		}, 60000 / bpm);
 	} else {
+		var main = document.getElementById('main');
 		if(rhythm.length && rhythm[0] == '1')
-			$('#main').css('visibility', 'visible');
+			main.style.visibility = 'visible';
 		else
-			$('#main').css('visibility', 'hidden');
+			main.style.visibility = 'hidden';
 	}
 }
 
+function removeChoice() {
+	var vote = document.getElementById('vote');
+	for(var i = vote.childNodes.length - 1; i > -1; i--)
+		vote.removeChild(vote.childNodes[i]);
+}
+
 function setVote(socket, choice) {
-	$('div.choice').remove();
-	for(var i = 0; i < choice.length; i++)
-		$('#vote').append('<div class="choice"><button>' + choice[i] + '</button></div>');
-	$('div.choice').css('height', 100 / choice.length + '%');
-	$('div.choice>button').click(function(event, ui) {
-		var params = {
-			'vote': $(event.target).text()
+	var vote = document.getElementById('vote');
+	for(var i = 0; i < choice.length; i++) {
+		var button = document.createElement('button');
+		button.innerText = choice[i];
+		button.onclick = function(event) {
+			var params = {
+				'vote': event.target.innerText
+			};
+			socket.send(JSON.stringify(params));
+			removeChoice();
 		}
-		socket.send(JSON.stringify(params));
-		$('div.choice').remove();
-	});
+
+		var div = document.createElement('div');
+		div.className = 'choice';
+		div.style.height = 100 / choice.length + '%';
+		div.appendChild(button);
+		vote.appendChild(div);
+	}
 }
 
 function openSocket(host) {
@@ -54,13 +69,14 @@ function openSocket(host) {
 		if('vote' in json) {
 			setVote(socket, json['vote']);
 		} else {
-			$('#main').css('background-color', json['color']);
+			var main = document.getElementById('main');
+			main.style.backgroundColor = json['color'];
 			setFlash(json['bpm'], json['rhythm']);
 		}
 	};
 
 	socket.onclose = function(event) {
-		$('div.choice').remove();
+		removeChoice();
 		if(retry)
 			return;
 		retry = setInterval(function() {
@@ -72,10 +88,11 @@ function openSocket(host) {
 	return socket;
 }
 
-$(function() {
+function init() {
 	var host = 'ws://' + location.host + '/socket';
 	socket = openSocket(host);
 
-	$('#main').css('background-color', 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')');
+	var main = document.getElementById('main');
+	main.style.backgroundColor = 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')';
 	setFlash(color[3], color[4]);
-});
+}
