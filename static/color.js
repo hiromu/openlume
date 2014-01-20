@@ -97,7 +97,7 @@ function openSocket(host) {
 }
 
 function init() {
-	var host = 'ws://' + location.host + '/socket';
+	var host = 'ws://' + location.host + ':8889/';
 	socket = openSocket(host);
 
 	var main = document.getElementById('main');
