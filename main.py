@@ -11,6 +11,7 @@ import txws
 
 import twisted.internet.protocol
 import twisted.internet.reactor
+import twisted.internet.task
 import txosc.async
 import txosc.dispatch
 
@@ -49,22 +50,23 @@ class Environment:
 	def updateAdmin(self, exclude = None):
 		for c in self.admin:
 			if c != exclude:
-				c.sendMessage(self.getAdminMessage())
+				c.transport.write(self.getAdminMessage())
 
 	def getVote(self):
 		return json.dumps({'vote': self.vote.keys()})
 
 	def sendVote(self):
 		for c in self.callback:
-			c.sendMessage(self.getVote())
+			c.transport.write(self.getVote())
 
+	def saveVote(self):
+		path = os.path.join(os.path.dirname(__file__), 'webroot', 'vote.json')
+		file = open(path, 'w')
+		file.write(json.dumps(self.vote))
+		file.close()
 
 env = Environment()
 
-
-class MainHandler(cyclone.web.RequestHandler):
-	def get(self):
-		self.render('index.html', color = env.getEnv())
 
 class MainSocketHandler(twisted.internet.protocol.Protocol):
 	def connectionMade(self):
@@ -81,24 +83,20 @@ class MainSocketHandler(twisted.internet.protocol.Protocol):
 		if 'vote' in data and data['vote'] in env.vote:
 			env.vote[data['vote']] += 1
 
-class MainSocketHandlerFactory(twisted.internet.protocol.Factory):
+class MainSocketFactory(twisted.internet.protocol.Factory):
 	protocol = MainSocketHandler
 
 
-class AdminHandler(cyclone.web.RequestHandler):
-	def get(self):
-		self.render('admin.html', color = env.getEnv())
-
-class AdminSocketHandler(cyclone.websocket.WebSocketHandler):
+class AdminSocketHandler(twisted.internet.protocol.Protocol):
 	def connectionMade(self):
 		env.admin.add(self)
-		self.sendMessage(env.getAdminMessage())
+		self.transport.write(env.getAdminMessage())
 
 	def connectionLost(self, reason):
 		if self in env.admin:
 			env.admin.remove(self)
 
-	def messageReceived(self, message):
+	def dataReceived(self, message):
 		data = json.loads(message)
 
 		if 'color' in data:
@@ -120,14 +118,16 @@ class AdminSocketHandler(cyclone.websocket.WebSocketHandler):
 		env.update()
 		env.updateAdmin(self)
 
+class AdminSocketFactory(twisted.internet.protocol.Factory):
+	protocol = AdminSocketHandler
 
-class VoteHandler(cyclone.web.RequestHandler):
-	def get(self):
-		self.render('vote.html', vote = json.dumps(env.vote))
 
-class VoteSocketHandler(cyclone.websocket.WebSocketHandler):
-	def messageReceived(self, message):
-		self.sendMessage(json.dumps(env.vote))
+class VoteSocketHandler(twisted.internet.protocol.Protocol):
+	def dataReceived(self, message):
+		self.transport.write(json.dumps(env.vote))
+
+class VoteSocketFactory(twisted.internet.protocol.Factory):
+	protocol = VoteSocketHandler
 
 
 class OSCHandler(object):
@@ -184,8 +184,6 @@ class OSCHandler(object):
 				if type(i) == str:
 					env.vote[i.decode('UTF-8')] = 0
 			env.sendVote()
-		elif function == 'get':
-			print env.vote
 		elif function == 'end':
 			env.vote = {}
 			env.sendVote()
@@ -193,23 +191,17 @@ class OSCHandler(object):
 	def fallback(self, message, address):
 		print message, address
 
-def main():
-	routes = [
-		(r'/', MainHandler),
-		(r'/admin', AdminHandler),
-		(r'/vote', VoteHandler),
-		#(r'/socket', MainSocketHandler),
-		(r'/socket/admin', AdminSocketHandler),
-		(r'/socket/vote', VoteSocketHandler)
-	]
 
-	app = cyclone.web.Application(routes,
-		template_path = os.path.join(os.path.dirname(__file__), 'templates'),
-		static_path = os.path.join(os.path.dirname(__file__), 'static'))
-	twisted.internet.reactor.listenTCP(8888, app)
-	twisted.internet.reactor.listenTCP(8889, txws.WebSocketFactory(MainSocketHandlerFactory()))
+def main():
+	twisted.internet.reactor.listenTCP(8888, txws.WebSocketFactory(MainSocketFactory()))
+	twisted.internet.reactor.listenTCP(8889, txws.WebSocketFactory(AdminSocketFactory()))
+	twisted.internet.reactor.listenTCP(8890, txws.WebSocketFactory(VoteSocketFactory()))
 
 	OSCHandler(51227)
+
+	timer = twisted.internet.task.LoopingCall(env.saveVote)
+	timer.start(1.0)
+
 	twisted.internet.reactor.run()
 
 if __name__ == '__main__':

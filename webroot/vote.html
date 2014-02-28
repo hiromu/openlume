@@ -2,14 +2,11 @@
 <html>
 	<head>
 		<title>openLUME</title>
-		<link rel="stylesheet" type="text/css" href="{{ static_url('vote.css') }}" />
+		<link rel="stylesheet" type="text/css" href="static/vote.css" />
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-		<script type="text/javascript" src="{{ static_url ('vote.js') }}"></script>
+		<script type="text/javascript" src="static/vote.js"></script>
 	</head>
 	<body>
 		<div id="vote"></div>
-		<script>
-			var vote = {% raw vote %};
-		</script>
 	</body>
 </html>

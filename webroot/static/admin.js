@@ -49,7 +49,7 @@ function disableControl(event) {
 
 $(function() {
 	var flag = true;
-	var host = 'ws://' + location.host + '/socket/admin';
+	var host = 'ws://' + location.host + ':8889/';
 	var socket = new WebSocket(host);
 
 	socket.onclose = disableControl;

@@ -36,12 +36,22 @@ function removeChoice() {
 }
 
 function setVote(socket, choice) {
-	var size = Infinity;
 	var vote = document.getElementById('vote');
+	for(var i = vote.childNodes.length - 1; i >= 0; i--)
+		vote.removeChild(vote.childNodes[i]);
+
+	var length = 0;
+	for(var i = 0; i < choice.length; i++)
+		length = Math.max(length, choice[i].length);
+
+	var height = document.body.offsetHeight / choice.length * 0.6;
+	var width = document.body.offsetWidth * 0.6;
+	var size = Math.min(height * 0.6, width * 0.6 / length);
 
 	for(var i = 0; i < choice.length; i++) {
 		var button = document.createElement('button');
 		button.innerText = choice[i];
+		button.style.fontSize = size + 'px';
 		button.onclick = function(event) {
 			var params = {
 				'vote': event.target.innerText
@@ -55,13 +65,7 @@ function setVote(socket, choice) {
 		div.style.height = 100 / choice.length + '%';
 		div.appendChild(button);
 		vote.appendChild(div);
-
-		size = Math.min(size, Math.min(button.offsetHeight * 0.6, button.offsetWidth * 0.8 / choice[i].length));
 	}
-
-	var button = document.getElementById('vote').getElementsByTagName('button');
-	for(var i = 0; i < button.length; i++)
-		button[i].style.fontSize = size + 'px';
 }
 
 function openSocket(host) {
@@ -97,10 +101,6 @@ function openSocket(host) {
 }
 
 function init() {
-	var host = 'ws://' + location.host + ':8889/';
+	var host = 'ws://' + location.host + ':8888/';
 	socket = openSocket(host);
-
-	var main = document.getElementById('main');
-	main.style.backgroundColor = 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')';
-	setFlash(color[3], color[4]);
 }

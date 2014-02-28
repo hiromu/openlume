@@ -19,6 +19,7 @@ div.choice {
 }
 
 div.choice>button {
+	background-color: #ccc;
 	border: 5px solid #eee;
 	border-radius: 10px;
 	display: table;

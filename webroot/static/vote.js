@@ -40,7 +40,6 @@ function openSocket(host) {
 }
 
 $(function() {
-	var host = 'ws://' + location.host + '/socket/vote';
+	var host = 'ws://' + location.host + ':8890/';
 	openSocket(host);
-	update(vote);
 });
