@@ -25,6 +25,7 @@ class Environment:
 		self.color = [[255, 255, 255]]
 		self.bpm = 120
 		self.rhythm = '10'
+		self.img = ''
 
 	def getEnv(self):
 		return json.dumps(map(str, random.choice(self.color) + [self.bpm, self.rhythm]))
@@ -65,6 +66,15 @@ class Environment:
 		file.write(json.dumps(self.vote))
 		file.close()
 
+	def getImage(self):
+		return json.dumps({'img': self.img})
+
+	def sendImage(self, img):
+		self.img = img
+
+		for c in self.callback:
+			c.transport.write(self.getImage())
+
 env = Environment()
 
 
@@ -73,6 +83,7 @@ class MainSocketHandler(twisted.internet.protocol.Protocol):
 		env.callback.add(self)
 		self.transport.write(env.getMessage())
 		self.transport.write(env.getVote())
+		self.transport.write(env.getImage())
 
 	def connectionLost(self, reason):
 		if self in env.callback:
@@ -134,7 +145,8 @@ class OSCHandler(object):
 	def __init__(self, port):
 		routes = [
 			('/cylume/*', self.cylume_handler),
-			('/vote/*', self.vote_handler)
+			('/vote/*', self.vote_handler),
+			('/image/*', self.image_handler)
 		]
 
 		self.receiver = txosc.dispatch.Receiver()
@@ -187,6 +199,15 @@ class OSCHandler(object):
 		elif function == 'end':
 			env.vote = {}
 			env.sendVote()
+
+	def image_handler(self, message, address):
+		function = message.address.split('/')[2]
+		value = message.getValues()
+
+		if function == 'upload' and len(value) == 1:
+			env.sendImage(value[0])
+		elif function == 'dismiss':
+			env.sendImage('')
 
 	def fallback(self, message, address):
 		print message, address

@@ -68,6 +68,27 @@ function setVote(socket, choice) {
 	}
 }
 
+function setImage(name) {
+	var div = document.getElementById('image');
+	for(var i = div.childNodes.length - 1; i >= 0; i--)
+		div.removeChild(div.childNodes[i]);
+
+	if(name) {
+		var img = document.createElement('img');
+		img.src = 'img/' + name;
+		img.onclick = function(e) {
+			e.stopPropagation();
+		};
+
+		var div = document.getElementById('image');
+		div.appendChild(img);
+		div.style.lineHeight = div.clientHeight + 'px';
+		div.onclick = function() {
+			setImage('');
+		};
+	}
+}
+
 function openSocket(host) {
 	var socket = new WebSocket(host);
 
@@ -80,6 +101,8 @@ function openSocket(host) {
 		var json = JSON.parse(event.data);
 		if('vote' in json) {
 			setVote(socket, json['vote']);
+		} else if('img' in json) {
+			setImage(json['img']);
 		} else {
 			var main = document.getElementById('main');
 			main.style.backgroundColor = json['color'];
